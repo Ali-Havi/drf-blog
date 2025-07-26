@@ -83,7 +83,7 @@ class CommentViewSet(ModelViewSet):
     ]
 
     def get_queryset(self):
-        blog_pk = self.kwargs["blog_pk"]
+        blog_pk = self.kwargs.get("blog_pk")
         qs = Comment.objects.select_related("blog__author", "author").filter(
             blog_id=blog_pk, status=True
         )
@@ -104,5 +104,5 @@ class CommentViewSet(ModelViewSet):
     def get_serializer_context(self):
         return {
             "request": self.request,
-            "blog_id": self.kwargs["blog_pk"],
+            "blog_id": self.kwargs.get("blog_pk"),
         }

@@ -24,6 +24,11 @@ class RequestOTPApiView(GenericAPIView):
         with transaction.atomic():
             if serializer.is_valid():
                 phone = serializer.validated_data["phone"]
+                if not User.objects.filter(phone=phone, is_active=False).exists():
+                    return Response(
+                        {"error": " Number is Activated Or There is not any user with this number"},
+                        status=status.HTTP_404_NOT_FOUND,
+                    )
                 code = generate_otp()
                 PhoneOTP.objects.update_or_create(phone=phone, defaults={"code": code})
                 send_otp_sms(phone, code)
@@ -33,7 +38,6 @@ class RequestOTPApiView(GenericAPIView):
 
 class VerifyOTPApiView(GenericAPIView):
     serializer_class = VerifyOTPSerializer
-
     def post(self, request):
         serializer = VerifyOTPSerializer(data=request.data)
         if serializer.is_valid():
@@ -53,7 +57,7 @@ class VerifyOTPApiView(GenericAPIView):
                     user.is_active = True
                     user.save()
                     return Response(
-                        {"message": "Code Accepted"}, status=status.HTTP_200_OK
+                        {"message": "Code Accepted And Account Verified"}, status=status.HTTP_200_OK
                     )
                 except PhoneOTP.DoesNotExist:
                     return Response(
