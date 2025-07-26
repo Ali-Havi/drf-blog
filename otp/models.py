@@ -15,4 +15,5 @@ class PhoneOTP(models.Model):
     verified = models.BooleanField(default=False)
 
     def is_expired(self):
-        return timezone.now() > self.created_at + timedelta(minutes=2)
+        elapsed = timezone.now() - self.created_at
+        return elapsed > timedelta(minutes=2)
