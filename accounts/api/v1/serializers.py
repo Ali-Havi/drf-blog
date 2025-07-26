@@ -7,6 +7,7 @@ from django.core import exceptions
 from ...models import Profile
 from ...utlis import phone_regex
 
+User = get_user_model()
 
 class UserRegisterSerializer(serializers.ModelSerializer):
     password1 = serializers.CharField(max_length=255, write_only=True)
@@ -17,7 +18,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        model = get_user_model()
+        model = User
         fields = [
             "email",
             "phone",
@@ -38,7 +39,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         validated_data.pop("password1", None)
-        return get_user_model().objects.create_user(**validated_data)
+        return User.objects.create_user(**validated_data)
 
 
 class PasswordChangeSerializer(serializers.Serializer):

@@ -17,10 +17,10 @@ from .serializers import (
     UserProfileSerializer,
 )
 
-
+User = get_user_model()
 class UserRegistrationApiView(GenericAPIView):
     serializer_class = UserRegisterSerializer
-    queryset = get_user_model().objects.all()
+    queryset = User.objects.all()
 
     def post(self, request, *args, **kwargs):
         with transaction.atomic():
@@ -41,7 +41,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
 class PasswordChangeApiView(GenericAPIView):
     serializer_class = PasswordChangeSerializer
-    model = get_user_model()
+    model = User
     permission_classes = [IsAuthenticated]
 
     def get_object(self):

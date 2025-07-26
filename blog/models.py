@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 
+User = get_user_model()
 
 class Blog(models.Model):
     BLOG_STATUS = (
@@ -9,7 +10,7 @@ class Blog(models.Model):
     )
 
     author = models.ForeignKey(
-        get_user_model(), on_delete=models.CASCADE, related_name="blogs"
+        User, on_delete=models.CASCADE, related_name="blogs"
     )
     categories = models.ManyToManyField(
         "Category",
@@ -35,7 +36,7 @@ class Category(models.Model):
 
 class Comment(models.Model):
     author = models.ForeignKey(
-        get_user_model(), on_delete=models.CASCADE, related_name="comments"
+        User, on_delete=models.CASCADE, related_name="comments"
     )
     blog = models.ForeignKey(Blog, on_delete=models.CASCADE, related_name="comments")
     comment = models.TextField()
