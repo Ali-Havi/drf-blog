@@ -13,9 +13,9 @@ class CustomUser(UserAdmin):
         "is_staff",
         "is_active",
     ]
-    
+
     fieldsets = (
-        (None, {"fields": ("email","phone","password")}),
+        (None, {"fields": ("email", "phone", "password")}),
         (
             ("Permissions"),
             {
@@ -30,7 +30,7 @@ class CustomUser(UserAdmin):
         ),
         (("Important dates"), {"fields": ("last_login", "date_joined")}),
     )
-    
+
     add_fieldsets = (
         (
             None,

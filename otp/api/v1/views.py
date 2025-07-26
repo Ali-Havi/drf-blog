@@ -11,26 +11,31 @@ from ...utils import generate_otp, send_otp_sms
 
 class RequestOTPApiView(GenericAPIView):
     serializer_class = SendOTPSerializer
-    
+
     def post(self, request):
         serializer = SendOTPSerializer(
             data=request.data,
         )
         if serializer.is_valid():
-            phone = serializer.validated_data["phone"]
-            code = generate_otp()
-            PhoneOTP.objects.update_or_create(
-                phone=phone, defaults={"code": code}
+            if (
+                not get_user_model()
+                .objects.get(phone=serializer.validated_data["phone"])
+                .exists()
+            ):
+                phone = serializer.validated_data["phone"]
+                code = generate_otp()
+                PhoneOTP.objects.update_or_create(phone=phone, defaults={"code": code})
+                send_otp_sms(phone, code)
+                return Response({"message": "Verification Code Sended"})
+            return Response(
+                {"error": "This Number is Used"}, status=status.HTTP_400_BAD_REQUEST
             )
-            send_otp_sms(phone, code)
-            return Response({"message": "Verification Code Sended"})
-
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class VerifyOTPApiView(GenericAPIView):
     serializer_class = VerifyOTPSerializer
-    
+
     def post(self, request):
         serializer = VerifyOTPSerializer(data=request.data)
         if serializer.is_valid():
