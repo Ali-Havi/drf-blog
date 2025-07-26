@@ -3,15 +3,14 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
+
 class Blog(models.Model):
     BLOG_STATUS = (
         ("acp", "Accepted"),
         ("drf", "Draft"),
     )
 
-    author = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="blogs"
-    )
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name="blogs")
     categories = models.ManyToManyField(
         "Category",
         related_name="blog_category",
@@ -35,9 +34,7 @@ class Category(models.Model):
 
 
 class Comment(models.Model):
-    author = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="comments"
-    )
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name="comments")
     blog = models.ForeignKey(Blog, on_delete=models.CASCADE, related_name="comments")
     comment = models.TextField()
     status = models.BooleanField(default=False)

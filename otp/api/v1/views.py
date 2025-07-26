@@ -13,6 +13,7 @@ from ...utils import generate_otp, send_otp_sms
 
 User = get_user_model()
 
+
 class RequestOTPApiView(GenericAPIView):
     serializer_class = SendOTPSerializer
 
@@ -43,24 +44,28 @@ class VerifyOTPApiView(GenericAPIView):
                     otp = PhoneOTP.objects.get(phone=phone, code=code)
                     if otp.is_expired():
                         return Response(
-                            {"error": "code is expired"}, status=status.HTTP_400_BAD_REQUEST
+                            {"error": "code is expired"},
+                            status=status.HTTP_400_BAD_REQUEST,
                         )
                     otp.verified = True
                     otp.delete()
                     user = User.objects.get(phone=phone)
                     user.is_active = True
                     user.save()
-                    return Response({"message": "Code Accepted"}, status=status.HTTP_200_OK)
+                    return Response(
+                        {"message": "Code Accepted"}, status=status.HTTP_200_OK
+                    )
                 except PhoneOTP.DoesNotExist:
                     return Response(
-                        {"error": "Code is Not Correct"}, status=status.HTTP_400_BAD_REQUEST
+                        {"error": "Code is Not Correct"},
+                        status=status.HTTP_400_BAD_REQUEST,
                     )
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LoginRequestOTPApiView(GenericAPIView):
     serializer_class = SendOTPSerializer
-    
+
     def post(self, request):
         with transaction.atomic():
             serializer = SendOTPSerializer(
@@ -69,18 +74,21 @@ class LoginRequestOTPApiView(GenericAPIView):
             if serializer.is_valid():
                 phone = serializer.validated_data["phone"]
                 if not User.objects.filter(phone=phone, is_active=True).exists():
-                    return Response({"error": "User not found or inactive"}, status=status.HTTP_404_NOT_FOUND)
+                    return Response(
+                        {"error": "User not found or inactive"},
+                        status=status.HTTP_404_NOT_FOUND,
+                    )
                 code = generate_otp()
                 PhoneOTP.objects.update_or_create(phone=phone, defaults={"code": code})
                 send_otp_sms(phone, code)
                 return Response({"message": "Verification Code Sended"})
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-    
+
+
 class LoginVerifyOTPApiView(GenericAPIView):
     serializer_class = VerifyOTPSerializer
-    
-    def post(self,request):
+
+    def post(self, request):
         serializer = VerifyOTPSerializer(data=request.data)
         if serializer.is_valid():
             phone = serializer.validated_data["phone"]
@@ -94,11 +102,14 @@ class LoginVerifyOTPApiView(GenericAPIView):
                 otp.delete()
                 user = User.objects.get(phone=phone)
                 refresh = RefreshToken.for_user(user)
-                
-                return Response({
-                    "refresh": str(refresh),
-                    "access": str(refresh.access_token),
-                }, status=status.HTTP_200_OK)
+
+                return Response(
+                    {
+                        "refresh": str(refresh),
+                        "access": str(refresh.access_token),
+                    },
+                    status=status.HTTP_200_OK,
+                )
             except PhoneOTP.DoesNotExist:
                 return Response(
                     {"error": "Code is Not Correct"}, status=status.HTTP_400_BAD_REQUEST

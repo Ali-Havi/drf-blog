@@ -9,6 +9,7 @@ from ...utlis import phone_regex
 
 User = get_user_model()
 
+
 class UserRegisterSerializer(serializers.ModelSerializer):
     password1 = serializers.CharField(max_length=255, write_only=True)
     phone = serializers.CharField(
@@ -28,8 +29,10 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         if User.objects.filter(phone=attrs.get("phone")).exists():
-            raise serializers.ValidationError({"error": "This phone number is used in another account"})
-            
+            raise serializers.ValidationError(
+                {"error": "This phone number is used in another account"}
+            )
+
         if attrs.get("password") != attrs.get("password1"):
             raise serializers.ValidationError({"error": "Passwords doesn't match"})
         try:

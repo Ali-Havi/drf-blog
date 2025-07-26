@@ -7,7 +7,7 @@ from ..utlis import phone_regex
 
 
 class CustomUserManager(BaseUserManager):
-    def create_user(self, email,phone, password=None, **extra_fields):
+    def create_user(self, email, phone, password=None, **extra_fields):
         if not email:
             raise ValueError("Email is Necessary")
 
@@ -22,7 +22,7 @@ class CustomUserManager(BaseUserManager):
 
         return user
 
-    def create_superuser(self, email, phone,password=None, **extra_fields):
+    def create_superuser(self, email, phone, password=None, **extra_fields):
 
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
@@ -32,7 +32,7 @@ class CustomUserManager(BaseUserManager):
         if extra_fields.get("is_superuser") is not True:
             raise ValueError("superuser must have is_superuser=True ")
 
-        return self.create_user(email,phone, password, **extra_fields)
+        return self.create_user(email, phone, password, **extra_fields)
 
 
 class CustomUserModel(AbstractBaseUser, PermissionsMixin):
@@ -41,7 +41,7 @@ class CustomUserModel(AbstractBaseUser, PermissionsMixin):
         validators=[
             phone_regex,
         ],
-        unique=True
+        unique=True,
     )
     is_active = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
@@ -51,4 +51,6 @@ class CustomUserModel(AbstractBaseUser, PermissionsMixin):
     objects = CustomUserManager()
 
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ['phone',]
+    REQUIRED_FIELDS = [
+        "phone",
+    ]

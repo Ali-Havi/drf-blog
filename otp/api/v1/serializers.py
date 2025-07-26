@@ -18,4 +18,3 @@ class VerifyOTPSerializer(serializers.Serializer):
         ],
     )
     code = serializers.CharField()
-
