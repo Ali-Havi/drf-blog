@@ -8,6 +8,7 @@ from ...models import PhoneOTP
 from .serializers import SendOTPSerializer, VerifyOTPSerializer
 from ...utils import generate_otp, send_otp_sms
 
+User = get_user_model()
 
 class RequestOTPApiView(GenericAPIView):
     serializer_class = SendOTPSerializer
@@ -18,8 +19,8 @@ class RequestOTPApiView(GenericAPIView):
         )
         if serializer.is_valid():
             if (
-                not get_user_model()
-                .objects.get(phone=serializer.validated_data["phone"])
+                not User
+                .objects.filter(phone=serializer.validated_data["phone"])
                 .exists()
             ):
                 phone = serializer.validated_data["phone"]
@@ -49,7 +50,7 @@ class VerifyOTPApiView(GenericAPIView):
                     )
                 otp.verified = True
                 otp.delete()
-                user = get_user_model().objects.get(phone=phone)
+                user = User.objects.get(phone=phone)
                 user.is_active = True
                 user.save()
                 return Response({"message": "Code Accepted"}, status=status.HTTP_200_OK)
