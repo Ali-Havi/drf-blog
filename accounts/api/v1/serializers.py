@@ -4,7 +4,7 @@ from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.core import exceptions
 
-from ...models import Profile
+from ...models import Profile,PendingUser
 from ...utlis import phone_regex
 
 User = get_user_model()
@@ -19,7 +19,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        model = User
+        model = PendingUser
         fields = [
             "email",
             "phone",
@@ -45,7 +45,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         validated_data.pop("password1", None)
-        return User.objects.create_user(**validated_data)
+        return PendingUser.objects.create(**validated_data)
 
 
 class PasswordChangeSerializer(serializers.Serializer):

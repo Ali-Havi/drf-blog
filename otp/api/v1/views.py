@@ -5,16 +5,26 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
-
+from rest_framework.throttling import ScopedRateThrottle
+from rest_framework.serializers import ValidationError
 
 from ...models import PhoneOTP
+from accounts.models import PendingUser
 from .serializers import SendOTPSerializer, VerifyOTPSerializer
 from ...utils import generate_otp, send_otp_sms
 
 User = get_user_model()
 
 
+def sended_code_is_expired(phone):
+    existing_otp = PhoneOTP.objects.filter(phone=phone).first()
+    if existing_otp and not existing_otp.is_expired():
+        raise ValidationError({"message": "Code already sent. Please wait."})
+
+
 class RequestOTPApiView(GenericAPIView):
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'otp'
     serializer_class = SendOTPSerializer
 
     def post(self, request):
@@ -24,13 +34,14 @@ class RequestOTPApiView(GenericAPIView):
         with transaction.atomic():
             if serializer.is_valid():
                 phone = serializer.validated_data["phone"]
-                if not User.objects.filter(phone=phone, is_active=False).exists():
+                if not PendingUser.objects.filter(phone=phone).exists():
                     return Response(
                         {
                             "error": " Number is Activated Or There is not any user with this number"
                         },
                         status=status.HTTP_404_NOT_FOUND,
                     )
+                sended_code_is_expired(phone)
                 code = generate_otp()
                 PhoneOTP.objects.update_or_create(phone=phone, defaults={"code": code})
                 send_otp_sms(phone, code)
@@ -39,6 +50,8 @@ class RequestOTPApiView(GenericAPIView):
 
 
 class VerifyOTPApiView(GenericAPIView):
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'otp'
     serializer_class = VerifyOTPSerializer
 
     def post(self, request):
@@ -54,11 +67,15 @@ class VerifyOTPApiView(GenericAPIView):
                             {"error": "code is expired"},
                             status=status.HTTP_400_BAD_REQUEST,
                         )
-                    otp.verified = True
+                    pending = PendingUser.objects.get(phone=phone)
+                    user = User.objects.create_user(
+                        email=pending.email,
+                        phone=pending.phone,
+                        password=pending.password,
+                        is_active=True
+                    )
                     otp.delete()
-                    user = User.objects.get(phone=phone)
-                    user.is_active = True
-                    user.save()
+                    pending.delete()
                     return Response(
                         {"message": "Code Accepted And Account Verified"},
                         status=status.HTTP_200_OK,
@@ -72,6 +89,8 @@ class VerifyOTPApiView(GenericAPIView):
 
 
 class LoginRequestOTPApiView(GenericAPIView):
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'otp'
     serializer_class = SendOTPSerializer
 
     def post(self, request):
@@ -86,6 +105,7 @@ class LoginRequestOTPApiView(GenericAPIView):
                         {"error": "User not found or inactive"},
                         status=status.HTTP_404_NOT_FOUND,
                     )
+                sended_code_is_expired(phone)
                 code = generate_otp()
                 PhoneOTP.objects.update_or_create(phone=phone, defaults={"code": code})
                 send_otp_sms(phone, code)
@@ -94,6 +114,8 @@ class LoginRequestOTPApiView(GenericAPIView):
 
 
 class LoginVerifyOTPApiView(GenericAPIView):
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'login'
     serializer_class = VerifyOTPSerializer
 
     def post(self, request):

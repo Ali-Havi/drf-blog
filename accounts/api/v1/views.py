@@ -7,8 +7,9 @@ from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.permissions import IsAuthenticated
 from django.db import transaction
+from rest_framework.throttling import ScopedRateThrottle
 
-from ...models import Profile
+from ...models import Profile,PendingUser
 
 from .serializers import (
     UserRegisterSerializer,
@@ -21,8 +22,10 @@ User = get_user_model()
 
 
 class UserRegistrationApiView(GenericAPIView):
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'anon'
     serializer_class = UserRegisterSerializer
-    queryset = User.objects.all()
+    queryset = PendingUser.objects.all()
 
     def post(self, request, *args, **kwargs):
         with transaction.atomic():
@@ -42,6 +45,8 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
 
 class PasswordChangeApiView(GenericAPIView):
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'user'
     serializer_class = PasswordChangeSerializer
     model = User
     permission_classes = [IsAuthenticated]
@@ -66,6 +71,7 @@ class PasswordChangeApiView(GenericAPIView):
 
 class UserProfileApiView(RetrieveUpdateAPIView):
     serializer_class = UserProfileSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         return Profile.objects.select_related("user")
