@@ -104,7 +104,6 @@ class LoginVerifyOTPApiView(GenericAPIView):
             try:
                 otp = PhoneOTP.objects.get(phone=phone, code=code)
                 if otp.is_expired():
-                    otp.delete()
                     return Response(
                         {"error": "code is expired"}, status=status.HTTP_400_BAD_REQUEST
                     )

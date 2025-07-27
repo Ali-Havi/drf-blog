@@ -1,7 +1,7 @@
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from django.db import transaction
+from rest_framework import status
 
 from .permission import (
     IsAdminUserOrReadOnly,
@@ -31,9 +31,9 @@ class BlogViewSet(ModelViewSet):
     http_method_names = ["get", "head", "option", "post", "put", "delete"]
     serializer_class = BlogSerializer
     queryset = (
-        Blog.objects.prefetch_related("categories")
+        Blog.objects.filter(status=True)
         .select_related("author")
-        .filter(status=True)
+        .prefetch_related("categories")
     )
     permission_classes = [
         IsAuthenticatedOrReadOnly,
@@ -66,6 +66,18 @@ class BlogViewSet(ModelViewSet):
         return {
             "request": self.request,
         }
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+
+        return Response(
+            {
+                "detail": "Your post was successfully submitted and will be displayed after admin approval."
+            },
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class CommentViewSet(ModelViewSet):

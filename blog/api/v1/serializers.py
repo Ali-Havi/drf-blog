@@ -73,22 +73,33 @@ class BlogCreateAndUpdateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         with transaction.atomic():
+
             categories = validated_data.pop("categories", [])
             user = self.context["request"].user
             status = True if user.is_staff else False
-            blog = Blog.objects.create(author=user, status=status, **validated_data)
-            blog.categories.set(categories)
+
+            blog = Blog(author=user, status=status, **validated_data)
+            blog.save()
+
+            if categories:
+                blog.categories.set(categories)
+
             return blog
 
     def update(self, instance, validated_data):
         with transaction.atomic():
             categories = validated_data.pop("categories", None)
+
             for attr, value in validated_data.items():
                 setattr(instance, attr, value)
-            instance.status = False
-            instance.save()
+
+            if validated_data:
+                instance.status = False
+                instance.save()
+
             if categories is not None:
                 instance.categories.set(categories)
+
             return instance
 
 
