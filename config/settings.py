@@ -170,7 +170,7 @@ REST_FRAMEWORK = {
         "anon": "10/minute",
         "user": "1000/day",
         "otp": "5/minute",
-        "login": "10/minute",
+        "login": "10/hour",
     },
 }
 

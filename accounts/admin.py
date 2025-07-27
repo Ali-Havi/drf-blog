@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth import get_user_model
 
-from .models import Profile
+from .models import Profile,PendingUser
 
 
 @admin.register(get_user_model())
@@ -48,4 +48,8 @@ class CustomUser(UserAdmin):
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
+    pass
+
+@admin.register(PendingUser)
+class PendingUserAdmin(admin.ModelAdmin):
     pass

@@ -23,7 +23,7 @@ User = get_user_model()
 
 class UserRegistrationApiView(GenericAPIView):
     throttle_classes = [ScopedRateThrottle]
-    throttle_scope = 'anon'
+    throttle_scope = 'login'
     serializer_class = UserRegisterSerializer
     queryset = PendingUser.objects.all()
 
