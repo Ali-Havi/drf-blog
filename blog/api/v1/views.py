@@ -31,8 +31,8 @@ class BlogViewSet(ModelViewSet):
     http_method_names = ["get", "head", "option", "post", "put", "delete"]
     serializer_class = BlogSerializer
     queryset = (
-        Blog.objects.select_related("author")
-        .prefetch_related("categories")
+        Blog.objects.prefetch_related("categories")
+        .select_related("author")
         .filter(status=True)
     )
     permission_classes = [

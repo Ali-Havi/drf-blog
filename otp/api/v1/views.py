@@ -26,7 +26,9 @@ class RequestOTPApiView(GenericAPIView):
                 phone = serializer.validated_data["phone"]
                 if not User.objects.filter(phone=phone, is_active=False).exists():
                     return Response(
-                        {"error": " Number is Activated Or There is not any user with this number"},
+                        {
+                            "error": " Number is Activated Or There is not any user with this number"
+                        },
                         status=status.HTTP_404_NOT_FOUND,
                     )
                 code = generate_otp()
@@ -38,6 +40,7 @@ class RequestOTPApiView(GenericAPIView):
 
 class VerifyOTPApiView(GenericAPIView):
     serializer_class = VerifyOTPSerializer
+
     def post(self, request):
         serializer = VerifyOTPSerializer(data=request.data)
         if serializer.is_valid():
@@ -57,7 +60,8 @@ class VerifyOTPApiView(GenericAPIView):
                     user.is_active = True
                     user.save()
                     return Response(
-                        {"message": "Code Accepted And Account Verified"}, status=status.HTTP_200_OK
+                        {"message": "Code Accepted And Account Verified"},
+                        status=status.HTTP_200_OK,
                     )
                 except PhoneOTP.DoesNotExist:
                     return Response(
@@ -100,6 +104,7 @@ class LoginVerifyOTPApiView(GenericAPIView):
             try:
                 otp = PhoneOTP.objects.get(phone=phone, code=code)
                 if otp.is_expired():
+                    otp.delete()
                     return Response(
                         {"error": "code is expired"}, status=status.HTTP_400_BAD_REQUEST
                     )
