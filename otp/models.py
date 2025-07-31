@@ -17,3 +17,6 @@ class PhoneOTP(models.Model):
     def is_expired(self):
         elapsed = timezone.now() - self.created_at
         return elapsed > timedelta(minutes=2)
+
+    def __str__(self):
+        return self.phone

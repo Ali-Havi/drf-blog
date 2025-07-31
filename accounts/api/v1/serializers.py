@@ -19,7 +19,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        model = PendingUser
+        model = User
         fields = [
             "email",
             "phone",
@@ -28,24 +28,27 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, attrs):
+        password = attrs.get("password")
+        
         if User.objects.filter(phone=attrs.get("phone")).exists():
             raise serializers.ValidationError(
                 {"error": "This phone number is used in another account"}
             )
 
-        if attrs.get("password") != attrs.get("password1"):
+        if password != attrs.get("password1"):
             raise serializers.ValidationError({"error": "Passwords doesn't match"})
         try:
-            validate_password(attrs.get("password"))
+            validate_password(password)
 
         except exceptions.ValidationError as e:
             raise serializers.ValidationError({"password": list(e.messages)})
 
+    
         return super().validate(attrs)
 
     def create(self, validated_data):
         validated_data.pop("password1", None)
-        return PendingUser.objects.create(**validated_data)
+        return User.objects.create_user(**validated_data)
 
 
 class PasswordChangeSerializer(serializers.Serializer):
@@ -75,6 +78,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
     def validate(self, attrs):
         validated_data = super().validate(attrs)
+        if not self.user.is_verified :
+            raise serializers.ValidationError({'details':'user is not verified'})
         validated_data["email"] = self.user.email
         validated_data["user_id"] = self.user.id
         return validated_data

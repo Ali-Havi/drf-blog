@@ -12,6 +12,7 @@ class CustomUser(UserAdmin):
         "email",
         "is_staff",
         "is_active",
+        "is_verified",
     ]
 
     fieldsets = (
@@ -23,6 +24,7 @@ class CustomUser(UserAdmin):
                     "is_active",
                     "is_staff",
                     "is_superuser",
+                    "is_verified",
                     "groups",
                     "user_permissions",
                 ),

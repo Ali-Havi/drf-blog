@@ -180,6 +180,9 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=8),
 }
 
+# Email Configuration
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
 
 # OTP Service
 # KAVENEGAR_API_KEY = ""

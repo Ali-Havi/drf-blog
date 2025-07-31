@@ -80,3 +80,7 @@ class UserProfileApiView(RetrieveUpdateAPIView):
         qs = self.get_queryset()
         obj = get_object_or_404(qs, user=self.request.user)
         return obj
+
+
+class UserActivationApiView(GenericAPIView):
+    pass

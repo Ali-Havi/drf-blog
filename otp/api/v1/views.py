@@ -110,7 +110,7 @@ class LoginRequestOTPApiView(GenericAPIView):
                 PhoneOTP.objects.update_or_create(phone=phone, defaults={"code": code})
                 send_otp_sms(phone, code)
                 return Response({"message": "Verification Code Sended"})
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LoginVerifyOTPApiView(GenericAPIView):

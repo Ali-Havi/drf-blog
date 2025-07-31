@@ -26,6 +26,7 @@ class CustomUserManager(BaseUserManager):
 
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
+        extra_fields.setdefault("is_verified", True)
 
         if extra_fields.get("is_staff") is not True:
             raise ValueError("superuser must have is_staff=True  ")
@@ -45,7 +46,8 @@ class CustomUserModel(AbstractBaseUser, PermissionsMixin):
     )
     is_active = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
-
+    is_verified = models.BooleanField(default=False)
+    
     date_joined = models.DateTimeField(default=timezone.now)
 
     objects = CustomUserManager()
