@@ -8,140 +8,143 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.serializers import ValidationError
 
-from ...models import PhoneOTP
-from accounts.models import PendingUser
-from .serializers import SendOTPSerializer, VerifyOTPSerializer
-from ...utils import generate_otp, send_otp_sms
+from .serializers import SendLoginOTPSerializer, SendOTPSerializer, VerifyOTPSerializer
+from ...utils import (
+    generate_otp,
+    send_otp_sms,
+    sended_code_is_expired,
+    save_otp,
+    verify_otp,
+    delete_pending_user,
+    get_pending_user,
+    save_pending_user,
+)
 
 User = get_user_model()
 
 
-def sended_code_is_expired(phone):
-    existing_otp = PhoneOTP.objects.filter(phone=phone).first()
-    if existing_otp and not existing_otp.is_expired():
-        raise ValidationError({"message": "Code already sent. Please wait."})
-
-
 class RequestOTPApiView(GenericAPIView):
     throttle_classes = [ScopedRateThrottle]
-    throttle_scope = 'otp'
+    throttle_scope = "otp"
     serializer_class = SendOTPSerializer
 
     def post(self, request):
-        serializer = SendOTPSerializer(
-            data=request.data,
-        )
-        with transaction.atomic():
-            if serializer.is_valid():
-                phone = serializer.validated_data["phone"]
-                if not PendingUser.objects.filter(phone=phone).exists():
-                    return Response(
-                        {
-                            "error": " Number is Activated Or There is not any user with this number"
-                        },
-                        status=status.HTTP_404_NOT_FOUND,
-                    )
-                sended_code_is_expired(phone)
-                code = generate_otp()
-                PhoneOTP.objects.update_or_create(phone=phone, defaults={"code": code})
-                send_otp_sms(phone, code)
-                return Response({"message": "Verification Code Sended"})
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer = self.serializer_class(data=request.data)
+
+        if serializer.is_valid():
+            phone = serializer.validated_data["phone"]
+            email = serializer.validated_data["email"]
+            password = serializer.validated_data["password"]
+
+            if User.objects.filter(phone=phone).exists():
+                return Response({"error": "Number already registered"}, status=400)
+
+            save_pending_user(phone, email, password)
+
+            resp = sended_code_is_expired(phone)
+            if resp:
+                return resp
+
+            code = generate_otp()
+            save_otp(phone, code)
+            send_otp_sms(phone, code)
+
+            return Response({"message": "Verification Code Sended"})
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class VerifyOTPApiView(GenericAPIView):
     throttle_classes = [ScopedRateThrottle]
-    throttle_scope = 'otp'
+    throttle_scope = "otp"
     serializer_class = VerifyOTPSerializer
 
     def post(self, request):
-        serializer = VerifyOTPSerializer(data=request.data)
+        serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            with transaction.atomic():
-                phone = serializer.validated_data["phone"]
-                code = serializer.validated_data["code"]
-                try:
-                    otp = PhoneOTP.objects.get(phone=phone, code=code)
-                    if otp.is_expired():
-                        return Response(
-                            {"error": "code is expired"},
-                            status=status.HTTP_400_BAD_REQUEST,
-                        )
-                    pending = PendingUser.objects.get(phone=phone)
-                    user = User.objects.create_user(
-                        email=pending.email,
-                        phone=pending.phone,
-                        password=pending.password,
-                        is_active=True
-                    )
-                    otp.delete()
-                    pending.delete()
-                    return Response(
-                        {"message": "Code Accepted And Account Verified"},
-                        status=status.HTTP_200_OK,
-                    )
-                except PhoneOTP.DoesNotExist:
-                    return Response(
-                        {"error": "Code is Not Correct"},
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            phone = serializer.validated_data["phone"]
+            code = serializer.validated_data["code"]
+
+            if not verify_otp(phone, code):
+                return Response(
+                    {"error": "Invalid or expired code"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            pending = get_pending_user(phone)
+            if not pending:
+                return Response({"error": "Pending data expired"}, status=400)
+
+            user = User.objects.create_user(
+                email=pending["email"],
+                phone=pending["phone"],
+                password=pending["password"],
+                is_active=True,
+            )
+            delete_pending_user(phone)
+
+            return Response(
+                {"message": "Code Accepted And Account Verified"},
+                status=status.HTTP_200_OK,
+            )
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LoginRequestOTPApiView(GenericAPIView):
     throttle_classes = [ScopedRateThrottle]
-    throttle_scope = 'otp'
-    serializer_class = SendOTPSerializer
+    throttle_scope = "otp"
+    serializer_class = SendLoginOTPSerializer
 
     def post(self, request):
-        with transaction.atomic():
-            serializer = SendOTPSerializer(
-                data=request.data,
-            )
-            if serializer.is_valid():
-                phone = serializer.validated_data["phone"]
-                if not User.objects.filter(phone=phone, is_active=True).exists():
-                    return Response(
-                        {"error": "User not found or inactive"},
-                        status=status.HTTP_404_NOT_FOUND,
-                    )
-                sended_code_is_expired(phone)
-                code = generate_otp()
-                PhoneOTP.objects.update_or_create(phone=phone, defaults={"code": code})
-                send_otp_sms(phone, code)
-                return Response({"message": "Verification Code Sended"})
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            phone = serializer.validated_data["phone"]
+            if not User.objects.filter(phone=phone, is_active=True).exists():
+                return Response(
+                    {"error": "User not found or inactive"},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            sended_code_is_expired(phone)
+            otp = generate_otp()
+            save_otp(phone, otp)
+            send_otp_sms(phone, otp)
+            return Response({"message": "Verification Code Sended"})
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LoginVerifyOTPApiView(GenericAPIView):
     throttle_classes = [ScopedRateThrottle]
-    throttle_scope = 'login'
+    throttle_scope = "login"
     serializer_class = VerifyOTPSerializer
 
     def post(self, request):
-        serializer = VerifyOTPSerializer(data=request.data)
+        serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             phone = serializer.validated_data["phone"]
             code = serializer.validated_data["code"]
-            try:
-                otp = PhoneOTP.objects.get(phone=phone, code=code)
-                if otp.is_expired():
-                    return Response(
-                        {"error": "code is expired"}, status=status.HTTP_400_BAD_REQUEST
-                    )
-                otp.delete()
-                user = User.objects.get(phone=phone)
-                refresh = RefreshToken.for_user(user)
 
+            if not User.objects.filter(phone=phone, is_active=True).exists():
                 return Response(
-                    {
-                        "refresh": str(refresh),
-                        "access": str(refresh.access_token),
-                    },
-                    status=status.HTTP_200_OK,
+                    {"error": "User not found or inactive"},
+                    status=status.HTTP_404_NOT_FOUND,
                 )
-            except PhoneOTP.DoesNotExist:
+
+            if sended_code_is_expired(phone) or not verify_otp(phone, code):
                 return Response(
-                    {"error": "Code is Not Correct"}, status=status.HTTP_400_BAD_REQUEST
+                    {"error": "Invalid or expired code"},
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
+
+            user = User.objects.get(phone=phone)
+            refresh = RefreshToken.for_user(user)
+
+            return Response(
+                {
+                    "refresh": str(refresh),
+                    "access": str(refresh.access_token),
+                },
+                status=status.HTTP_200_OK,
+            )
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -4,7 +4,7 @@ from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.core import exceptions
 
-from ...models import Profile,PendingUser
+from ...models import Profile
 from ...utlis import phone_regex
 
 User = get_user_model()
@@ -29,7 +29,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         password = attrs.get("password")
-        
+
         if User.objects.filter(phone=attrs.get("phone")).exists():
             raise serializers.ValidationError(
                 {"error": "This phone number is used in another account"}
@@ -43,7 +43,6 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         except exceptions.ValidationError as e:
             raise serializers.ValidationError({"password": list(e.messages)})
 
-    
         return super().validate(attrs)
 
     def create(self, validated_data):
@@ -78,8 +77,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
     def validate(self, attrs):
         validated_data = super().validate(attrs)
-        if not self.user.is_verified :
-            raise serializers.ValidationError({'details':'user is not verified'})
+        if not self.user.is_verified:
+            raise serializers.ValidationError({"details": "user is not verified"})
         validated_data["email"] = self.user.email
         validated_data["user_id"] = self.user.id
         return validated_data

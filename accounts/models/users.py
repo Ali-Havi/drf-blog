@@ -47,7 +47,7 @@ class CustomUserModel(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
     is_verified = models.BooleanField(default=False)
-    
+
     date_joined = models.DateTimeField(default=timezone.now)
 
     objects = CustomUserManager()
@@ -56,13 +56,3 @@ class CustomUserModel(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = [
         "phone",
     ]
-
-
-class PendingUser(models.Model):
-    email = models.EmailField()
-    phone = models.CharField(validators=[phone_regex], max_length=14)
-    password = models.CharField(max_length=255)
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    def __str__(self):
-        return self.email

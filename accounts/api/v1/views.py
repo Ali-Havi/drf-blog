@@ -9,7 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.db import transaction
 from rest_framework.throttling import ScopedRateThrottle
 
-from ...models import Profile,PendingUser
+from ...models import Profile
 
 from .serializers import (
     UserRegisterSerializer,
@@ -23,9 +23,9 @@ User = get_user_model()
 
 class UserRegistrationApiView(GenericAPIView):
     throttle_classes = [ScopedRateThrottle]
-    throttle_scope = 'login'
+    throttle_scope = "login"
     serializer_class = UserRegisterSerializer
-    queryset = PendingUser.objects.all()
+    queryset = User.objects.all()
 
     def post(self, request, *args, **kwargs):
         with transaction.atomic():
@@ -46,7 +46,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
 class PasswordChangeApiView(GenericAPIView):
     throttle_classes = [ScopedRateThrottle]
-    throttle_scope = 'user'
+    throttle_scope = "user"
     serializer_class = PasswordChangeSerializer
     model = User
     permission_classes = [IsAuthenticated]
