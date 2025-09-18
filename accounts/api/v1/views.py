@@ -1,6 +1,8 @@
 from django.shortcuts import get_object_or_404
-from rest_framework.generics import GenericAPIView, UpdateAPIView, RetrieveUpdateAPIView
-from rest_framework import mixins
+from rest_framework.generics import (
+    GenericAPIView,
+    RetrieveUpdateAPIView,
+)
 from rest_framework import status
 from rest_framework.response import Response
 from django.contrib.auth import get_user_model
@@ -82,5 +84,5 @@ class UserProfileApiView(RetrieveUpdateAPIView):
         return obj
 
 
-class UserActivationApiView(GenericAPIView):
-    pass
+# class UserActivationApiView(GenericAPIView):
+#     pass

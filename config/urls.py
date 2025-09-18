@@ -44,7 +44,9 @@ urlpatterns = [
     path("otp/", include("otp.urls")),
     # Third Parties
     path(
-        "swagger.<format>/", schema_view.without_ui(cache_timeout=0), name="schema-json"
+        "swagger.<format>/",
+        schema_view.without_ui(cache_timeout=0),
+        name="schema-json",
     ),
     path(
         "swagger/",

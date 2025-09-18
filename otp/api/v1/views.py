@@ -1,18 +1,19 @@
-from django.db import transaction
-from rest_framework.views import APIView
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.throttling import ScopedRateThrottle
-from rest_framework.serializers import ValidationError
 
-from .serializers import SendLoginOTPSerializer, SendOTPSerializer, VerifyOTPSerializer
+from .serializers import (
+    SendLoginOTPSerializer,
+    SendOTPSerializer,
+    VerifyOTPSerializer,
+)
 from ...utils import (
     generate_otp,
     send_otp_sms,
-    sended_code_is_expired,
+    code_is_sended,
     save_otp,
     verify_otp,
     delete_pending_user,
@@ -41,7 +42,7 @@ class RequestOTPApiView(GenericAPIView):
 
             save_pending_user(phone, email, password)
 
-            resp = sended_code_is_expired(phone)
+            resp = code_is_sended(phone)
             if resp:
                 return resp
 
@@ -75,7 +76,7 @@ class VerifyOTPApiView(GenericAPIView):
             if not pending:
                 return Response({"error": "Pending data expired"}, status=400)
 
-            user = User.objects.create_user(
+            User.objects.create_user(
                 email=pending["email"],
                 phone=pending["phone"],
                 password=pending["password"],
@@ -105,7 +106,11 @@ class LoginRequestOTPApiView(GenericAPIView):
                     {"error": "User not found or inactive"},
                     status=status.HTTP_404_NOT_FOUND,
                 )
-            sended_code_is_expired(phone)
+
+            resp = code_is_sended(phone)
+            if resp:
+                return resp
+
             otp = generate_otp()
             save_otp(phone, otp)
             send_otp_sms(phone, otp)
@@ -130,7 +135,7 @@ class LoginVerifyOTPApiView(GenericAPIView):
                     status=status.HTTP_404_NOT_FOUND,
                 )
 
-            if sended_code_is_expired(phone) or not verify_otp(phone, code):
+            if not verify_otp(phone, code):
                 return Response(
                     {"error": "Invalid or expired code"},
                     status=status.HTTP_400_BAD_REQUEST,

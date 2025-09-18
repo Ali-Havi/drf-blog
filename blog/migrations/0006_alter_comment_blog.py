@@ -7,7 +7,10 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("blog", "0005_comment_blog_alter_author_user_alter_blog_author_and_more"),
+        (
+            "blog",
+            "0005_comment_blog_alter_author_user_alter_blog_author_and_more",
+        ),
     ]
 
     operations = [

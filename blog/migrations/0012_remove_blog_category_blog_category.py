@@ -18,7 +18,10 @@ class Migration(migrations.Migration):
             model_name="blog",
             name="category",
             field=models.ManyToManyField(
-                blank=True, null=True, related_name="blog_category", to="blog.category"
+                blank=True,
+                null=True,
+                related_name="blog_category",
+                to="blog.category",
             ),
         ),
     ]

@@ -5,11 +5,6 @@ User = get_user_model()
 
 
 class Blog(models.Model):
-    BLOG_STATUS = (
-        ("acp", "Accepted"),
-        ("drf", "Draft"),
-    )
-
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name="blogs")
     categories = models.ManyToManyField(
         "Category",

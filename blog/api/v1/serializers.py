@@ -1,23 +1,22 @@
 from rest_framework import serializers
 from django.db import transaction
-from django.contrib.auth import get_user_model
 
 from ...models import Blog, Category, Comment
 
 
 class CategorySerializer(serializers.ModelSerializer):
-    url = serializers.HyperlinkedIdentityField(view_name="category-detail")
+    # url = serializers.HyperlinkedIdentityField(view_name="category-detail")
 
     class Meta:
         model = Category
         fields = [
             "title",
-            "url",
+            # "url",
         ]
 
 
 class BlogSerializer(serializers.ModelSerializer):
-    url = serializers.HyperlinkedIdentityField(view_name="blog-detail")
+    url = serializers.HyperlinkedIdentityField(view_name="blog:api-v1:blog-detail")
     author = serializers.StringRelatedField()
     categories = CategorySerializer(
         many=True,
@@ -38,7 +37,9 @@ class BlogSerializer(serializers.ModelSerializer):
 
 
 class UserBlogSerializer(serializers.ModelSerializer):
-    url = serializers.HyperlinkedIdentityField(view_name="blog-detail")
+    url = serializers.HyperlinkedIdentityField(
+        view_name="blog:api-v1:blog-detail",
+    )
     author = serializers.StringRelatedField()
     categories = CategorySerializer(
         many=True,
@@ -94,7 +95,7 @@ class BlogCreateAndUpdateSerializer(serializers.ModelSerializer):
                 setattr(instance, attr, value)
 
             if validated_data:
-                instance.status = False
+                instance.status = True if instance.author.is_staff else False
                 instance.save()
 
             if categories is not None:
@@ -119,6 +120,7 @@ class CommentSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "author",
+            "blog",
             "comment",
             "date_create",
         ]

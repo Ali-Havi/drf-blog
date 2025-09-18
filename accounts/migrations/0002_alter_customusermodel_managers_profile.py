@@ -28,8 +28,14 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
-                ("first_name", models.CharField(blank=True, max_length=255, null=True)),
-                ("last_name", models.CharField(blank=True, max_length=255, null=True)),
+                (
+                    "first_name",
+                    models.CharField(blank=True, max_length=255, null=True),
+                ),
+                (
+                    "last_name",
+                    models.CharField(blank=True, max_length=255, null=True),
+                ),
                 ("created_date", models.DateTimeField(auto_now_add=True)),
                 ("updated_date", models.DateTimeField(auto_now=True)),
                 (

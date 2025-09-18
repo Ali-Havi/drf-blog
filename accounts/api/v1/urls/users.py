@@ -12,15 +12,25 @@ from ..views import (
 )
 
 
+app_name = "users"
+
 urlpatterns = [
     # Register
-    path("registration/", UserRegistrationApiView.as_view(), name="registrations"),
+    path(
+        "registration/",
+        UserRegistrationApiView.as_view(),
+        name="registrations",
+    ),
     # Activation
     # path("activation/confirm/", UserActivationApiView.as_view(),name="activation"),
     # Resend Activation
     # path("activation/resend/", UserResendActivationApiView.as_view(),name="resend-activation"),
     # Change Password
-    path("password/change/", PasswordChangeApiView.as_view(), name="change-password"),
+    path(
+        "password/change/",
+        PasswordChangeApiView.as_view(),
+        name="change-password",
+    ),
     # Reset Password
     # JWT Token
     path("jwt/create/", CustomTokenObtainPairView.as_view(), name="jwt-create"),

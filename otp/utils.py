@@ -32,7 +32,7 @@ def delete_pending_user(phone):
     cache.delete(f"pending:{phone}")
 
 
-def sended_code_is_expired(phone):
+def code_is_sended(phone):
     if cache.get(f"otp:{phone}"):
         return Response(
             {"message": "You have already received a code. Please wait."},
@@ -54,6 +54,9 @@ def verify_otp(phone, code):
 
 def send_otp_sms(phone, code):
     # api = KavenegarAPI(settings.KAVENEGAR_API_KEY)
-    params = {"receptor": phone, "message": f"Your Verification Code : {code}"}
+    params = {
+        "receptor": phone,
+        "message": f"Your Verification Code : {code}",
+    }
     print(params)
     # api.sms_send(params)
