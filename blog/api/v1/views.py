@@ -1,6 +1,7 @@
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework import status
+from django_filters.rest_framework import DjangoFilterBackend
 
 from .permission import (
     IsAdminUserOrReadOnly,
@@ -18,19 +19,11 @@ from .serializers import (
 from ...models import Blog, Category, Comment
 
 
-class CategoryViewSet(ModelViewSet):
-    http_method_names = ["get", "head", "option", "post", "put", "delete"]
-    serializer_class = CategorySerializer
-    queryset = Category.objects.all()
-    permission_classes = [
-        IsAdminUserOrReadOnly,
-    ]
-
-
 class BlogViewSet(ModelViewSet):
     http_method_names = ["get", "head", "option", "post", "put", "delete"]
     serializer_class = BlogSerializer
-
+    filter_backends=[DjangoFilterBackend]
+    filterset_fields = ['categories','author']
     permission_classes = [
         IsAuthenticatedOrReadOnly,
     ]

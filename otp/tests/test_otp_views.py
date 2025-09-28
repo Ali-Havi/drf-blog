@@ -104,7 +104,7 @@ class TestOTPViews:
         access = login_verify_otp_response.data['access']
         api_client.credentials(HTTP_AUTHORIZATION = f"Bearer {access}")
         
-        # profile_url = reverse('accounts:api-v1:profile')
-        # profile_response = api_client.get(profile_url)
+        profile_url = reverse('accounts:api-v1:profile')
+        profile_response = api_client.get(profile_url)
 
-        # assert profile_response.status_code == 200
+        assert profile_response.status_code == 403

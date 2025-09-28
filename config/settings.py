@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "rest_framework_nested",
     "django_redis",
+    "django_filters",
     # local
     "accounts",
     "blog",
